@@ -431,7 +431,7 @@
 
     <p class="error" id="error" hidden></p>
     <footer>
-      <span>Arquivo único · funciona offline no Linux e no macOS</span>
+      <span>Stem Sync <b id="ver">v1.2</b> · 16/11/2026 · Linux, macOS e iPhone</span>
       <span>Velocidade desta versão altera o tom · áudio inteiro fica na RAM</span>
     </footer>
   </div>
@@ -448,6 +448,7 @@
       "#94a3b8"
     ];
 
+    const VERSION = "v1.2";
     const $ = (id) => document.getElementById(id);
     const fileInput = $("file");
     const drop = $("drop");
@@ -943,6 +944,27 @@
         .finally(() => { e.target.value = ""; lastPick = ""; });
     }
     fileInput.addEventListener("change", onPick);
+    // iOS às vezes não dispara change/input: confere o campo quando a página volta do seletor
+    const recheck = () => setTimeout(() => {
+      if (fileInput.files && fileInput.files.length) onPick({ target: fileInput });
+    }, 400);
+    window.addEventListener("focus", recheck);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) recheck(); });
+    fileInput.addEventListener("click", () => { fileInput.value = ""; lastPick = ""; });
+    // avisa se existe versão mais nova publicada (Safari costuma guardar a página em cache)
+    if (location.protocol.startsWith("http")) {
+      fetch(location.pathname + "?nc=" + Date.now(), { cache: "no-store" })
+        .then((r) => r.text())
+        .then((t) => {
+          const m = t.match(/const VERSION = "([^"]+)"/);
+          if (m && m[1] !== VERSION) {
+            const v = $("ver");
+            v.textContent = `${VERSION} → ${m[1]} disponível, toque para atualizar`;
+            v.style.cursor = "pointer"; v.style.color = "var(--gold)";
+            v.onclick = () => location.replace(location.pathname + "?v=" + m[1]);
+          }
+        }).catch(() => {});
+    }
     fileInput.addEventListener("input", onPick);
     window.addEventListener("error", (e) => showError(`Erro: ${e.message}`));
     window.addEventListener("unhandledrejection", (e) => showError(`Erro: ${e.reason && e.reason.message ? e.reason.message : e.reason}`));
