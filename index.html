@@ -2,7 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0c0d10" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Stem Sync" />
   <title>Stem Sync</title>
   <style>
     :root {
@@ -21,8 +26,12 @@
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
+    html { background-color: #0c0d10; color-scheme: dark; }
+    body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
     html, body {
       margin: 0;
+      background-color: #0c0d10;
+      background-attachment: fixed;
       height: 100%;
       background: radial-gradient(1200px 600px at 10% -10%, #1a1712 0%, var(--bg) 45%);
       color: var(--text);
@@ -373,10 +382,10 @@
           <text x="108" y="24" fill="url(#g)" font-family="ui-sans-serif, Segoe UI, Helvetica, sans-serif" font-size="16" font-weight="700" letter-spacing="1.6">SYNC</text>
         </svg>
       </div>
-      <div class="drop" id="drop" title="Clique ou solte arquivos">
+      <label class="drop" id="drop" for="file" title="Clique ou solte arquivos">
         <span class="drop-full">Solte os stems aqui ou clique para escolher · <b>vários arquivos da mesma música</b></span>
         <span class="drop-short">Enviar stems</span>
-      </div>
+      </label>
     </header>
     <div class="load" id="load" hidden>
       <div class="load-bar"><i id="loadFill"></i></div>
@@ -422,7 +431,7 @@
       <span>Velocidade desta versão altera o tom · áudio inteiro fica na RAM</span>
     </footer>
   </div>
-  <input id="file" type="file" accept="audio/*,.wav,.flac,.mp3,.ogg,.m4a" multiple hidden />
+  <input id="file" type="file" multiple style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" />
 
   <script>
     const PALETTE = [
@@ -909,7 +918,6 @@
       const rect = e.currentTarget.getBoundingClientRect();
       setPos(((e.clientX - rect.left) / rect.width) * state.duration);
     });
-    drop.addEventListener("click", () => fileInput.click());
     $("add").addEventListener("click", () => fileInput.click());
     $("clear").addEventListener("click", () => {
       stopSources(false);
@@ -919,7 +927,7 @@
       state.duration = 0;
       renderTracks();
     });
-    fileInput.addEventListener("change", (e) => addFiles(e.target.files));
+    fileInput.addEventListener("change", (e) => { addFiles(e.target.files); e.target.value = ""; });
 
     ["dragenter", "dragover"].forEach((ev) => {
       window.addEventListener(ev, (e) => {
