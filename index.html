@@ -442,22 +442,11 @@
     <p class="error" id="error" hidden></p>
     <pre id="diag" hidden style="white-space:pre-wrap;font-size:11px;color:#e0b15a;margin:8px 18px;"></pre>
     <footer>
-      <span>Stem Sync <b id="ver">v1.4</b> · 16/11/2026 · Linux, macOS e iPhone</span>
+      <span>Stem Sync <b id="ver">v1.5</b> · 16/11/2026 · Linux, macOS e iPhone</span>
       <span>Velocidade desta versão altera o tom · áudio inteiro fica na RAM</span>
     </footer>
   </div>
   
-  <script>
-    (function () {
-      var f = document.getElementById("file");
-      ["click", "input", "change"].forEach(function (ev) {
-        f.addEventListener(ev, function () {
-          __log("evento " + ev + ": " + (f.files ? f.files.length : "sem lista") + " arquivo(s)" +
-            (f.files && f.files[0] ? " · " + f.files[0].name + " · " + (f.files[0].type || "sem tipo") + " · " + Math.round(f.files[0].size / 1048576) + " MB" : ""));
-        });
-      });
-    })();
-  </script>
   <script>
     const PALETTE = [
       "#f472b6",
@@ -470,7 +459,7 @@
       "#94a3b8"
     ];
 
-    const VERSION = "v1.4";
+    const VERSION = "v1.5";
     const $ = (id) => document.getElementById(id);
     const fileInput = $("file");
     const drop = $("drop");
@@ -502,7 +491,13 @@
       const s = t % 60;
       return `${m}:${s.toFixed(1).padStart(4, "0")}`;
     }
+    // iOS 17+: trata o áudio da página como mídia (toca mesmo no modo silencioso)
+    function setPlaybackSession() {
+      try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+    }
+    setPlaybackSession();
     function ensureCtx() {
+      setPlaybackSession();
       if (!state.ctx) state.ctx = new (window.AudioContext || window.webkitAudioContext)();
       if (state.ctx.state === "suspended") state.ctx.resume();
       return state.ctx;
@@ -1050,7 +1045,6 @@
   </script>
   <script>
     if (!window.__mainOk) __log("ERRO: o script principal parou antes do fim");
-    else __log("script principal ok (" + VERSION + ") · " + navigator.userAgent.replace(/.*(iPhone OS [0-9_]+).*Version\/([0-9.]+).*/, "$1 · Safari $2"));
   </script>
 </body>
 </html>
