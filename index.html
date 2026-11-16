@@ -118,6 +118,9 @@
       background: rgba(224,177,90,.08);
       color: var(--gold-2);
     }
+    .drop { position: relative; overflow: hidden; }
+    #file { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+    .drop.busy #file { display: none; }
     .drop b { color: var(--text); font-weight: 600; }
     .drop.busy { pointer-events: none; opacity: .45; }
     .load {
@@ -382,7 +385,8 @@
           <text x="108" y="24" fill="url(#g)" font-family="ui-sans-serif, Segoe UI, Helvetica, sans-serif" font-size="16" font-weight="700" letter-spacing="1.6">SYNC</text>
         </svg>
       </div>
-      <label class="drop" id="drop" for="file" title="Clique ou solte arquivos">
+      <label class="drop" id="drop" title="Clique ou solte arquivos">
+        <input id="file" type="file" multiple aria-label="Enviar stems" />
         <span class="drop-full">Solte os stems aqui ou clique para escolher · <b>vários arquivos da mesma música</b></span>
         <span class="drop-short">Enviar stems</span>
       </label>
@@ -431,8 +435,7 @@
       <span>Velocidade desta versão altera o tom · áudio inteiro fica na RAM</span>
     </footer>
   </div>
-  <input id="file" type="file" multiple style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" />
-
+  
   <script>
     const PALETTE = [
       "#f472b6",
@@ -834,7 +837,7 @@
             solo: false
           });
         } catch (err) {
-          showError(`Não deu para decodificar ${file.name}. Tente WAV ou FLAC.`);
+          showError(`Não deu para decodificar ${file.name} (${err && err.message ? err.message : err}).`);
         }
       }
       setLoad(true, incoming.length, incoming.length);
@@ -927,7 +930,22 @@
       state.duration = 0;
       renderTracks();
     });
-    fileInput.addEventListener("change", (e) => { addFiles(e.target.files); e.target.value = ""; });
+    let lastPick = "";
+    function onPick(e) {
+      const files = [...(e.target.files || [])];
+      const sig = files.map((f) => f.name + f.size).join("|");
+      if (!files.length || sig === lastPick) return;
+      lastPick = sig;
+      showError("");
+      $("load").hidden = false;
+      $("loadText").textContent = `Recebi ${files.length} arquivo${files.length > 1 ? "s" : ""}, preparando…`;
+      addFiles(files).catch((err) => showError(`Erro ao carregar: ${err && err.message ? err.message : err}`))
+        .finally(() => { e.target.value = ""; lastPick = ""; });
+    }
+    fileInput.addEventListener("change", onPick);
+    fileInput.addEventListener("input", onPick);
+    window.addEventListener("error", (e) => showError(`Erro: ${e.message}`));
+    window.addEventListener("unhandledrejection", (e) => showError(`Erro: ${e.reason && e.reason.message ? e.reason.message : e.reason}`));
 
     ["dragenter", "dragover"].forEach((ev) => {
       window.addEventListener(ev, (e) => {
