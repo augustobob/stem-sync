@@ -442,7 +442,7 @@
     <p class="error" id="error" hidden></p>
     <pre id="diag" hidden style="white-space:pre-wrap;font-size:11px;color:#e0b15a;margin:8px 18px;"></pre>
     <footer>
-      <span>Stem Sync <b id="ver">v1.3</b> · 16/11/2026 · Linux, macOS e iPhone</span>
+      <span>Stem Sync <b id="ver">v1.4</b> · 16/11/2026 · Linux, macOS e iPhone</span>
       <span>Velocidade desta versão altera o tom · áudio inteiro fica na RAM</span>
     </footer>
   </div>
@@ -470,7 +470,7 @@
       "#94a3b8"
     ];
 
-    const VERSION = "v1.3";
+    const VERSION = "v1.4";
     const $ = (id) => document.getElementById(id);
     const fileInput = $("file");
     const drop = $("drop");
@@ -738,11 +738,12 @@
         const el = document.createElement("div");
         el.className = "track";
         el.style.setProperty("--stem", track.color);
+        const safeName = String(track.name).split('"').join('"');
         el.innerHTML = `
           <div class="meta">
             <div class="name">
               <i class="swatch" style="background:${track.color}"></i>
-              <input value="${track.name.replace(/"/g, """)}" title="${track.name.replace(/"/g, """)}" />
+              <input value="${safeName}" title="${safeName}" />
             </div>
             <div class="btns">
               <button class="solo ${track.solo ? "on" : ""}">S</button>
