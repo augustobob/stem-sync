@@ -1,0 +1,20 @@
+<!doctype html><meta charset=utf-8><body><script>
+async function render(opts) {
+  const sr = 48000, dur = 3;
+  const ctx = new OfflineAudioContext(2, sr * dur, sr);
+  await ctx.audioWorklet.addModule("../js/stem-processor.js");
+  const node = new AudioWorkletNode(ctx, "stem-sync", { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
+  node.connect(ctx.destination);
+  const ready = await new Promise((r) => { node.port.onmessage = (e) => { if (e.data.type === "ready") r(e.data); }; });
+  const len = sr * 4; const a = new Float32Array(len);
+  if (opts.sine) { for (let i = 0; i < len; i++) a[i] = 0.5 * Math.sin(2 * Math.PI * 440 * i / sr); }
+  else for (let k = 0; k < 8; k++) { const p = Math.round((0.25 + k * 0.5) * sr); for (let j = 0; j < 200; j++) a[p + j] = Math.sin(j * 0.3) * Math.exp(-j / 40); }
+  node.port.postMessage({ type: "add", id: "a", ch: [a], gain: 1 });
+  node.port.postMessage({ type: "force", on: !!opts.force });
+  node.port.postMessage({ type: "play", input: 0, output: 0.1, rate: opts.rate || 1, semi: opts.semi || 0 });
+  ctx.suspend(128/sr).then(() => setTimeout(() => ctx.resume(), 300));
+  const buf = await ctx.startRendering();
+  return { ready, data: Array.from(buf.getChannelData(0)) };
+}
+window.render = render;
+</script>
