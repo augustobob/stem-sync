@@ -1,0 +1,21 @@
+<!doctype html><meta charset=utf-8><body><script>
+async function bench(nStems, secs, force, rate, semi) {
+  const sr = 48000;
+  const ctx = new OfflineAudioContext(2, sr * secs, sr);
+  await ctx.audioWorklet.addModule("../js/stem-processor.js");
+  const node = new AudioWorkletNode(ctx, "stem-sync", { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
+  node.connect(ctx.destination);
+  await new Promise((r) => { node.port.onmessage = (e) => { if (e.data.type === "ready") r(); }; });
+  for (let s = 0; s < nStems; s++) {
+    const L = new Float32Array(sr * (secs + 2)), R = new Float32Array(sr * (secs + 2));
+    for (let i = 0; i < L.length; i++) { L[i] = (Math.random() - .5) * .1; R[i] = Math.sin(i * 0.01 * (s + 1)) * .1; }
+    node.port.postMessage({ type: "add", id: "s" + s, ch: [L, R], gain: 1 }, [L.buffer, R.buffer]);
+  }
+  node.port.postMessage({ type: "force", on: force });
+  node.port.postMessage({ type: "play", input: 0, output: 0, rate, semi });
+  ctx.suspend(128 / sr).then(() => setTimeout(() => { window.__t0 = performance.now(); ctx.resume(); }, 500));
+  await ctx.startRendering();
+  return (performance.now() - window.__t0) / 1000;
+}
+window.bench = bench;
+</script>
